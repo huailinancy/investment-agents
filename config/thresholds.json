@@ -1,0 +1,10 @@
+{
+  "AAPL":  { "above": 240, "below": 180 },
+  "NVDA":  { "above": 160, "below": 100 },
+  "MSFT":  { "above": 460, "below": 370 },
+  "GOOGL": { "above": 210, "below": 160 },
+  "META":  { "above": 700, "below": 520 },
+  "TSLA":  { "above": 400, "below": 250 },
+  "ALAB":  { "above": 180, "below": null },
+  "IT":    { "above": 200, "below": null }
+}

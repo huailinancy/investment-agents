@@ -1,0 +1,9 @@
+{
+  "smtp_host":        "smtp.gmail.com",
+  "smtp_port":        587,
+  "sender_email":     "your_gmail@gmail.com",
+  "sender_password":  "xxxx xxxx xxxx xxxx",
+  "recipient_email":  "your_gmail@gmail.com",
+  "groq_api_key":     "gsk_...",
+  "openai_api_key":   "sk-proj-..."
+}
