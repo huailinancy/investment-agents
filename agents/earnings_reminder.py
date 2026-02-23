@@ -1,6 +1,6 @@
 """
-Agent B – Earnings T-2 Reminder
-Alerts when a watchlist stock has earnings in the next 2 days.
+Agent B – Earnings 7-Day Reminder
+Alerts when a watchlist stock has earnings in the next 7 days.
 Data source: yfinance (free, no API key)
 """
 
@@ -52,13 +52,13 @@ def get_earnings_info(ticker: str) -> dict | None:
         return None
 
 def main():
-    today   = datetime.now().date()
-    t2_date = today + timedelta(days=2)
+    today      = datetime.now().date()
+    window_date = today + timedelta(days=7)
 
     print(f"\n{'═'*60}")
-    print(f"  🔔  EARNINGS T-2 REMINDER")
+    print(f"  🔔  EARNINGS 7-DAY REMINDER")
     print(f"  {datetime.now().strftime('%A, %B %d %Y  %H:%M')}")
-    print(f"  Checking for earnings on or before: {t2_date}")
+    print(f"  Checking for earnings on or before: {window_date}")
     print(f"{'═'*60}\n")
 
     watchlist = load_watchlist()
@@ -74,29 +74,29 @@ def main():
             errors.append(ticker)
             continue
         days = info['days']
-        if 0 <= days <= 2:
+        if 0 <= days <= 7:
             alerts.append(info)
-        elif 3 <= days <= 30:
+        elif 8 <= days <= 30:
             upcoming.append(info)
 
     # ── Alerts ────────────────────────────────────────────────
     if alerts:
-        print(f"  🚨  {len(alerts)} ALERT(S) — Earnings within 2 days:\n")
+        print(f"  🚨  {len(alerts)} ALERT(S) — Earnings within 7 days:\n")
         for a in sorted(alerts, key=lambda x: x['days']):
             if a['days'] == 0:
                 label = '🔴 TODAY'
             elif a['days'] == 1:
                 label = '⚡ TOMORROW'
             else:
-                label = f"📅 in 2 days ({a['date']})"
+                label = f"📅 in {a['days']} days ({a['date']})"
             print(f"    {a['ticker']:<8}  {a['company'][:35]:<35}  {label}")
         print()
     else:
-        print("  ✅  No earnings in the next 2 days for your watchlist.\n")
+        print("  ✅  No earnings in the next 7 days for your watchlist.\n")
 
     # ── Upcoming (3–30 days) ───────────────────────────────────
     if upcoming:
-        print("  📆  Upcoming earnings (next 30 days):\n")
+        print("  📆  Upcoming earnings (8–30 days):\n")
         for a in sorted(upcoming, key=lambda x: x['days']):
             print(f"    {a['ticker']:<8}  {a['company'][:35]:<35}  {a['date']}  (in {a['days']} days)")
         print()
