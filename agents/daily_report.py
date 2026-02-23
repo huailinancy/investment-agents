@@ -578,89 +578,6 @@ def build_ipo_section() -> tuple[str, str]:
     return html, plain
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 7 — Agent Benchmark Scorecard (reads last saved results)
-# ─────────────────────────────────────────────────────────────────────────────
-_BENCHMARK_DIMS = ['completeness', 'data_quality', 'relevance', 'clarity', 'error_free']
-_BENCHMARK_LABELS = ['Compl.', 'Quality', 'Relev.', 'Clarity', 'No-Err']
-_BENCHMARK_AGENTS = [
-    ('bond_yield',        'Bond Yield'),
-    ('daily_news',        'Daily News'),
-    ('earnings_reminder', 'Earnings Reminder'),
-    ('ipo_scout',         'IPO Scout'),
-    ('price_alerts',      'Price Alerts'),
-]
-
-def build_benchmark_section() -> tuple[str, str]:
-    """Reads last benchmark_scores.json record and formats as email section."""
-    if not cfg.get('openai_api_key', ''):
-        return '', ''
-    scores_file = BASE / 'state' / 'benchmark_scores.json'
-    if not scores_file.exists():
-        return '', ''
-    try:
-        records = json.loads(scores_file.read_text(encoding='utf-8'))
-        if not records:
-            return '', ''
-        last    = records[-1]
-        ts      = last.get('timestamp', '')
-        agents  = last.get('agents', {})
-    except Exception:
-        return '', ''
-
-    def score_badge(s: float) -> str:
-        if s >= 4.0:
-            color, bg = '#166534', '#dcfce7'
-        elif s >= 3.0:
-            color, bg = '#92400e', '#fef3c7'
-        else:
-            color, bg = '#991b1b', '#fee2e2'
-        return (f'<span style="background:{bg};color:{color};font-weight:700;'
-                f'padding:2px 8px;border-radius:12px;font-size:13px">{s:.1f}</span>')
-
-    th = 'padding:6px 10px;text-align:center;font-size:12px;color:#6b7280;font-weight:600'
-    header_cells = (f'<th style="{th};text-align:left">Agent</th>'
-                    f'<th style="{th}">Overall</th>'
-                    + ''.join(f'<th style="{th}">{lbl}</th>' for lbl in _BENCHMARK_LABELS)
-                    + f'<th style="{th};text-align:left">Summary</th>')
-
-    rows_html  = ''
-    rows_plain = ''
-    for key, label in _BENCHMARK_AGENTS:
-        if key not in agents:
-            continue
-        res     = agents[key]
-        overall = res.get('overall', 0)
-        scores  = res.get('scores', {})
-        summary = res.get('summary', '')
-        dim_cells = ''.join(
-            f'<td style="padding:6px 10px;text-align:center;font-size:13px">'
-            f'{scores.get(d, "—")}</td>'
-            for d in _BENCHMARK_DIMS
-        )
-        rows_html += (
-            f'<tr style="border-bottom:1px solid #e0e7ff">'
-            f'<td style="padding:8px 10px;font-weight:600;font-size:14px">{label}</td>'
-            f'<td style="padding:6px 10px;text-align:center">{score_badge(overall)}</td>'
-            f'{dim_cells}'
-            f'<td style="padding:6px 12px;font-size:12px;color:#6b7280">{summary}</td>'
-            f'</tr>'
-        )
-        star = '🟢' if overall >= 4.0 else ('🟡' if overall >= 3.0 else '🔴')
-        rows_plain += f'  {star} {label:<22} {overall:.1f}  {summary}\n'
-
-    ts_fmt = ts[:16].replace('T', ' ') if ts else 'unknown'
-    html = (
-        f'<div style="background:#eef2ff;border-radius:8px;padding:10px 14px;margin-bottom:12px">'
-        f'<p style="margin:0;font-size:12px;color:#4338ca">Scored by Claude Haiku · '
-        f'Last run: {ts_fmt} · 5 dimensions (1–5 each)</p></div>'
-        f'<table style="border-collapse:collapse;width:100%">'
-        f'<tr style="background:#eef2ff">{header_cells}</tr>'
-        + rows_html + '</table>'
-    )
-    plain = rows_plain
-    return html, plain
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Build & Send Email
 # ─────────────────────────────────────────────────────────────────────────────
 SECTION_STYLE = 'margin:24px 0 8px;padding:10px 16px;border-left:4px solid {color};background:{bg};font-size:16px;font-weight:700'
@@ -675,7 +592,6 @@ def build_email() -> tuple[str, str]:
     price_html,    price_plain    = build_price_section()
     stock_html,    stock_plain    = build_stock_summary_section()
     ipo_html,      ipo_plain      = build_ipo_section()
-    bench_html,    bench_plain    = build_benchmark_section()
 
     # ── Plain text ────────────────────────────────────────────────────────────
     plain = f'DAILY INVESTMENT REPORT — {today_str}\n{"="*60}\n\n'
@@ -691,9 +607,6 @@ def build_email() -> tuple[str, str]:
         _n += 1
     if ipo_plain:
         plain += f'{_n}. UPCOMING TECH IPOs\n' + ('-'*40) + '\n' + ipo_plain + '\n'
-        _n += 1
-    if bench_plain:
-        plain += f'{_n}. AGENT BENCHMARK SCORECARD\n' + ('-'*40) + '\n' + bench_plain + '\n'
 
     # ── HTML ──────────────────────────────────────────────────────────────────
     def section(title, body, color, bg):
@@ -716,9 +629,6 @@ def build_email() -> tuple[str, str]:
         n += 1
     if ipo_html:
         body_parts.append(section(f'🔍 {n}. Upcoming Tech IPOs', ipo_html, '#10b981', '#f0fdf4'))
-        n += 1
-    if bench_html:
-        body_parts.append(section(f'🤖 {n}. Agent Benchmark Scorecard', bench_html, '#6366f1', '#eef2ff'))
 
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
